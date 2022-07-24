@@ -1,0 +1,24 @@
+*** Probes ***
+
++ FPing
+
+binary = /usr/sbin/fping
+
+++ FPingNormal
+offset = 0%
+
+++ FPingFast
+pings = 5
+step = 30
+offset = 2%
+
++ FPing6
+
+binary = /usr/sbin/fping
+protocol = 6
+
++ DNS
+binary = /usr/bin/dig
+lookup = google.com
+pings = 5
+step = 300
