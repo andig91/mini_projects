@@ -1,0 +1,54 @@
+# Survey tool, Erstellen von Abfragen/Umfragen
+
+# Produktiv im Einsatz  
+
+version: '2'
+
+services:
+
+  limesurvey:
+    image: acspri/limesurvey:3.26.3-lts
+    ports:
+      - 8082:80
+    environment:
+      LIMESURVEY_DB_PASSWORD: password
+      LIMESURVEY_ADMIN_USER: admin
+      LIMESURVEY_ADMIN_PASSWORD: password
+      LIMESURVEY_ADMIN_NAME: ADMIN Lime
+      LIMESURVEY_ADMIN_EMAIL: lime@lime.lime
+    volumes:
+      - upload:/var/www/html/upload
+    restart: always
+
+  mysql:
+    image: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    restart: always
+    volumes:
+      - mysql:/var/lib/mysql
+
+  rsync_client:
+#	 image: andi91/rsync_arm64
+    image: eeacms/rsync
+    container_name: rsync_client_limesurvey
+    restart: always
+    volumes:
+      - mysql:/data_mysql
+      - upload:/data_limesurvey
+      - /home/<user>:/data_user
+    #environment:
+      #- CRON_TASK_1=1 * * * * echo I am alive > test.txt
+    #No Cron inside needed. Backup script/cronjob outside which use rsync as command/service
+    command: client
+
+volumes:
+  mysql:
+  upload:
+
+
+# From: https://hub.docker.com/r/acspri/limesurvey
+# Eintrichen über Docker-compose möglich
+# Editor nur grob getestet
+# Wird wahrscheinlich funktionieren
+# Umfrage lässt sich jedenfalls erneut importieren

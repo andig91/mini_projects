@@ -1,0 +1,22 @@
+# Survey tool, Erstellen von Abfragen/Umfragen
+
+# Nie produktiv verwendet  
+
+version: '2'
+services:
+  limesurvey:
+    ports:
+      - "8082:80"
+    volumes:
+      - mysql:/var/lib/mysql
+      - upload:/app/upload
+    image:
+      crramirez/limesurvey:latest
+volumes:
+  mysql:
+  upload:
+
+# From: https://hub.docker.com/r/crramirez/limesurvey
+# Funktioniert und getestet
+# Grundeinrichtung (Database name, Password etc) nicht über Docker Compose
+# Umfrage lässt sich jedenfalls erneut importieren
