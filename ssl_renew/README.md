@@ -5,6 +5,7 @@ I use letsencrypt-Certs only for internal use with internal DNS-Server.
 For letsencrypt I need a public DNS record.  
 Most of the time the DNS record has an (non-functional) internal IP-Address and not routed in the internet.  
 One time all 60 days, this script change it to the real address to renew the cert.  
+The certbot in traefik make renew the certs, this script make the DNS requirement.  
 After letsencrypt has expanded the expiry time, the IP-Address of the DNS record change bach to the internal.  
 
 ## Configuration and Credentials  
