@@ -1,0 +1,7 @@
+<Telegram-Bot-Token>
+<Telegram-Receiver>
+<DDNS-API-KEY>
+<Subdomain for DNS Update>
+<Maindomain for DNS Update>
+<Complete Domain for cert check = Subdomain + Maindomain>
+<Internal IP-Adress for Cert check>
