@@ -58,8 +58,10 @@ fi
 
 echo $versenden100T
 
-geimpft=$(curl https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/vaccinations/country_data/Austria.csv | tail -n 1 | cut -d '"' -f 1,3 | cut -d , -f 2,6,7,8)
-geimpft_nachricht=$(echo Impfungen: $(echo $geimpft | cut -d , -f 1) Erste $(echo $geimpft | cut -d , -f 2) Voll $(echo $geimpft | cut -d , -f 3) Booster $(echo $geimpft | cut -d , -f 4))
+#geimpft=$(curl https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/vaccinations/country_data/Austria.csv | tail -n 1 | cut -d '"' -f 1,3 | cut -d , -f 2,6,7,8)
+#geimpft_nachricht=$(echo Impfungen: $(echo $geimpft | cut -d , -f 1) Erste $(echo $geimpft | cut -d , -f 2) Voll $(echo $geimpft | cut -d , -f 3) Booster $(echo $geimpft | cut -d , -f 4))
+geimpft=$(curl https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/vaccinations/country_data/Austria.csv | tail -n 1 | cut -d '"' -f 1,3 | cut -d , -f 2,6,8)
+geimpft_nachricht=$(echo Impfungen: $(echo $geimpft | cut -d , -f 1) Voll $(echo $geimpft | cut -d , -f 2) Booster $(echo $geimpft | cut -d , -f 3))
 
 echo $geimpft_nachricht
 
