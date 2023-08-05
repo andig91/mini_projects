@@ -33,9 +33,11 @@ exit
 fi
 
 
-curl 'https://www.ui.com/download/?product=uap-ac-lr' -H 'x-requested-with: XMLHttpRequest' --compressed > work.json
+#curl 'https://www.ui.com/download/?product=uap-ac-lr' -H 'x-requested-with: XMLHttpRequest' --compressed > work.json
+curl 'https://download.svc.ui.com/v1/downloads/products/slugs/uap-ac-pro' -H 'x-requested-with: XMLHttpRequest' --compressed > work.json
 
-neu=$(cat work.json | jq '.downloads[-1] | .rank')
+#neu=$(cat work.json | jq '.downloads[-1] | .rank')
+neu=$(cat work.json | jq '[.downloads[] | select( .category.slug == "firmware")][0].id ')
 echo $neu
 
 alt=$(cat last.txt)
@@ -49,8 +51,12 @@ then
 else
 	echo "$(date "+%F %T") Neue Software, Alt: $alt, Neu: $neu" >> new_firmware_prot.txt
 	echo Neue Software
-	cat work.json | jq --argjson alt "$alt" '[.downloads[] | select( .rank > $alt ) | select( .category__slug == "firmware") | {ID: .rank, Name: .name, Versions: .version, Changelog: .changelog, Produkte: .products} ]' | sed 's!    !!g;s!  !!g;s!\]!!g;s!\[!!g;s!\"!!g;s!{!!g;s!}!!g;/^[[:space:]]*$/d;' > neu.json
-	cat work.json | jq '.downloads[-1] | .rank' > last.txt
+	#cat work.json | jq --argjson alt "$alt" '[.downloads[] | select( .rank > $alt ) | select( .category__slug == "firmware") | {ID: .rank, Name: .name, Versions: .version, Changelog: .changelog, Produkte: .products} ]' | sed 's!    !!g;s!  !!g;s!\]!!g;s!\[!!g;s!\"!!g;s!{!!g;s!}!!g;/^[[:space:]]*$/d;' > neu.json
+	#cat work.json | jq '.downloads[-1] | .rank' > last.txt
+	cat work.json | jq --argjson alt "$alt" '[.downloads[] | select( .id > $alt ) | select( .category.slug == "firmware") | {ID: .id, Name: .name, Versions: .version, Changelog: .changelog} ]' | sed 's!    !!g;s!  !!g;s!\]!!g;s!\[!!g;s!\"!!g;s!{!!g;s!}!!g;/^[[:space:]]*$/d;' > neu.json
+        #cat work.json | jq '.downloads[0] | .id' > last.txt
+	echo $neu > last.txt
+
 	if cat neu.json | grep -q "\[\]"
 	then
 		echo Nichts zum Versenden
@@ -62,7 +68,7 @@ else
 		curl -X POST \
 	     -H 'Content-Type: application/json' \
 	     -d '{"chat_id": "'$empfanger'", "text": "Neue Ubiquiti Firmware:
-'"$versenden"' "}' \
+'"Neue ID: $neu Details: \n$versenden"' "}' \
 	     https://api.telegram.org/bot$token/sendMessage
 		#curl "https://api.telegram.org/bot$token/sendMessage?chat_id=$empfanger&text=Neue Firmware von Ubiquiti:%0A$versenden"
 	fi
