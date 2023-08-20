@@ -62,8 +62,11 @@ curl --data "sid=$sid&lang=de&page=log&no_sidrenew=&filter=0" http://$(sed -n 5p
 #dateLast=$(cat response/fritzlog_filter2.txt | awk -F"\"log\":" '{print $2}' | cut -d'"' -f2)
 #timeLast=$(cat response/fritzlog_filter2.txt | awk -F"\"log\":" '{print $2}' | cut -d'"' -f4)
 
-dateLast=$(cat response/fritzlog_filter2.txt | jq -r ".data.log[-1][0]")
-timeLast=$(cat response/fritzlog_filter2.txt | jq -r ".data.log[-1][1]")
+#dateLast=$(cat response/fritzlog_filter2.txt | jq -r ".data.log[-1][0]")
+#timeLast=$(cat response/fritzlog_filter2.txt | jq -r ".data.log[-1][1]")
+# New Format
+dateLast=$(cat response/fritzlog_filter2.txt | jq -r ".data.log[-1].date")
+timeLast=$(cat response/fritzlog_filter2.txt | jq -r ".data.log[-1].time")
 
 if [ -z "$dateLast" ]
 then
