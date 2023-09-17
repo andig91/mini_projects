@@ -19,6 +19,7 @@ if [ -f "cred.txt" ]
 then
 	token=$(sed -n 1p cred.txt)
 	empfanger=$(sed -n 2p cred.txt)
+	directustoken=$(sed -n 3p cred.txt)
 fi
 
 if [ -z "$token" ]
@@ -63,8 +64,10 @@ function download_extract() {
 	if [ $preisalt == $preis ]
 	then
 		aenderung="unveraendert"
+		ChangesBool=false
 	else
 		aenderung="geaendert"
+		ChangesBool=true
 		aenderungstext="$aenderungstext%0APreisaenderung $1: Jetzt $preis Vorher $preisalt Preisblatt $tarifbl"
 	fi
 	echo "Preis $aenderung"
@@ -73,6 +76,25 @@ function download_extract() {
 	echo "$(date +%F);$1;$tarifbl" >> Tarifblaetter.txt
 	curl -o ./tarifblaetter/$(date +%F)_$1.pdf "$tarifbl"
 
+	preis1point=$(echo $preis | sed "s/,/./" )
+	echo $preis1point
+	if [ "$preis2" ]
+	then
+		#echo hallo
+		preis2point=$(echo $preis2 | sed "s/,/./" )
+	else
+		preis2point=null
+	fi
+	echo Senden daten $preis1point $preis2point
+	curl --location 'http://'$(sed -n 4p cred.txt)'/items/EVN_Preistracker?access_token='$directustoken'' \
+	--header 'Content-Type: application/json' \
+	--data '{
+			"Tarif": "'$1'",
+			"TarifDay": '$preis1point',
+			"TarifNight": '$preis2point',
+			"ChangesBool": '$ChangesBool'
+	}'
+	#'$(sed 's/,/./' $preis2)'
 }
 
 download_extract Gas_Float https://www.evn.at/home/gas/optimafloatgas

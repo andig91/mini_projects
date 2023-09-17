@@ -19,7 +19,15 @@ getRestzeit () {
 	echo $restzeit
 }
 
-
+updateSend () {
+	#curl "https://dynamicdns.park-your-domain.com/update?domain=$(sed -n 5p cred.txt)&password=$(sed -n 3p cred.txt)&host=$(sed -n 4p cred.txt)&ip=$1"
+	curl "https://api.telegram.org/bot$(sed -n 1p cred.txt)/sendMessage?chat_id=$(sed -n 2p cred.txt)&text=$3"
+	curl --location "http://$(sed -n 9p cred.txt)/items/SSL_Check_BWINT?access_token=$(sed -n 8p cred.txt)" \
+		--header 'Content-Type: application/json' \
+		--data '{
+		"OpenClose": "'$2'", "Restzeit": "'$1'","Comment": "'"$3"'"
+		}'
+}
 
 
 #IP_now=$(ping $(sed -n 6p cred.txt) -W 1 -c 1 | sed -n 1p | cut -d "(" -f 2 | cut -d ")" -f 1)
@@ -32,7 +40,11 @@ if [ ! $IP_now = "172.16.72.255" ]; then
 	if [ $restzeit -gt 25 ]; then
 		echo "Zertifikat update"
 		curl "https://dynamicdns.park-your-domain.com/update?domain=$(sed -n 5p cred.txt)&password=$(sed -n 3p cred.txt)&host=$(sed -n 4p cred.txt)&ip=172.16.72.255"
-		curl "https://api.telegram.org/bot$(sed -n 1p cred.txt)/sendMessage?chat_id=$(sed -n 2p cred.txt)&text=$(sed -n 4p cred.txt): Zertifikat wieder $restzeit Tage gueltig"
+		comment="$(sed -n 4p cred.txt): Zertifikat wieder $restzeit Tage gueltig"
+		echo $comment
+		updateSend "$restzeit" "Extended/Closed" "$comment"
+		#curl "https://api.telegram.org/bot$(sed -n 1p cred.txt)/sendMessage?chat_id=$(sed -n 2p cred.txt)&text=$comment"
+		#curl --location "http://'$(sed -n 9p cred.txt)'/items/SSL_Check_BWINT?access_token=$(sed -n 8p cred.txt)" --header 'Content-Type: application/json' --data '{"OpenClose": "Extended/Closed", "Restzeit": "'$restzeit'","Comment": "'"$comment"'"}'
 	else
 		echo "Zertifikat noch nicht neu"
 	fi
@@ -52,7 +64,11 @@ else
 		else
 			echo "Zertifikat lauft bald ab"
 			curl "https://dynamicdns.park-your-domain.com/update?domain=$(sed -n 5p cred.txt)&password=$(sed -n 3p cred.txt)&host=$(sed -n 4p cred.txt)"
-			curl "https://api.telegram.org/bot$(sed -n 1p cred.txt)/sendMessage?chat_id=$(sed -n 2p cred.txt)&text=$(sed -n 4p cred.txt): Zertifikat nur mehr $restzeit Tage gueltig"
+			comment="$(sed -n 4p cred.txt): Zertifikat nur mehr $restzeit Tage gueltig"
+			echo $comment
+			updateSend "$restzeit" "Opened" "$comment"
+			#curl "https://api.telegram.org/bot$(sed -n 1p cred.txt)/sendMessage?chat_id=$(sed -n 2p cred.txt)&text=$comment"
+			#curl --location "http://'$(sed -n 9p cred.txt)'/items/SSL_Check_BWINT?access_token=$(sed -n 8p cred.txt)" --header 'Content-Type: application/json' --data '{"OpenClose": "Opened", "Restzeit": '$restzeit',"Comment": "'"$comment"'"}'
 		fi
 	fi
 fi

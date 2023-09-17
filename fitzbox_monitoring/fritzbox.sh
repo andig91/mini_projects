@@ -16,6 +16,7 @@ if [ ! -f "cred.txt" ]; then
 	echo "<FirtzBox-User (Diagnose-Sicherheit-FritzboxUser)>"
 	echo "<FritzBox-Passwort>"
 	echo "<FritzBox-IP-Address>"
+	echo "<Directus-Token-Address>"
 	echo
 	exit
 	mkdir response
@@ -97,8 +98,16 @@ then
 	echo "Datum bekannt"
 else
 	echo "Neue Datei, Fritzbox Neustart"
+	dateLastConverted=$(echo "20$(echo $dateLast | cut -d "." -f 3,2,1 | tr "." "-")")
 #	Die Telegram-Token und Empfaenger liegen jetzt in einer Datei. Zeile 1 Token, Zeile 2 Empfaenger
-	curl "https://api.telegram.org/bot$(sed -n 1p cred.txt)/sendMessage?chat_id=$(sed -n 2p cred.txt)&text=Fritzbox Ollern Neustart "$dateLast" "${timeLast:0:5}""
+	curl "https://api.telegram.org/bot$(sed -n 1p cred.txt)/sendMessage?chat_id=$(sed -n 2p cred.txt)&text=Fritzbox Ollern Neustart "$dateLastConverted" "${timeLast:0:5}""
+	curl --location 'http://'$(sed -n 7p cred.txt)'/items/Fritzbox_Tracker?access_token='$(sed -n 6p cred.txt)'' \
+	--header 'Content-Type: application/json' \
+	--data '{
+        "RestartDate": "'$dateLastConverted'",
+        "RestartTime": "'${timeLast:0:5}'",
+        "Comment": "Restart Fritzbox"
+	}'
 fi
 
 mv response/fritzlog_filter2.txt "response/"$dateLast"_"${timeLast:0:5}"_fritzlog_filter2.txt"

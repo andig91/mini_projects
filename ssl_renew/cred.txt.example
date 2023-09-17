@@ -5,3 +5,5 @@
 <Maindomain for DNS Update>
 <Complete Domain for cert check = Subdomain + Maindomain>
 <Internal IP-Adress for Cert check>
+<Directus-API-Key>
+<Directus-Domain>

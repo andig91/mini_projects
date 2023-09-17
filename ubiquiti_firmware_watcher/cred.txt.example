@@ -1,2 +1,4 @@
-<BOT-TOKEN>
-<Receiver-ID>
+<Telegram-Bot-Token>
+<Telegram-Receiver>
+<Directus-API-Key>
+<Directus-Domain>

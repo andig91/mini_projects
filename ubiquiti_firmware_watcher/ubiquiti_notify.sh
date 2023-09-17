@@ -37,7 +37,7 @@ fi
 curl 'https://download.svc.ui.com/v1/downloads/products/slugs/uap-ac-pro' -H 'x-requested-with: XMLHttpRequest' --compressed > work.json
 
 #neu=$(cat work.json | jq '.downloads[-1] | .rank')
-neu=$(cat work.json | jq '[.downloads[] | select( .category.slug == "firmware")][0].id ')
+neu=$(cat work.json | jq '[.downloads[] | select( .category.slug == "firmware" or .category.slug == "software")][0].id ')
 echo $neu
 
 alt=$(cat last.txt)
@@ -53,8 +53,9 @@ else
 	echo Neue Software
 	#cat work.json | jq --argjson alt "$alt" '[.downloads[] | select( .rank > $alt ) | select( .category__slug == "firmware") | {ID: .rank, Name: .name, Versions: .version, Changelog: .changelog, Produkte: .products} ]' | sed 's!    !!g;s!  !!g;s!\]!!g;s!\[!!g;s!\"!!g;s!{!!g;s!}!!g;/^[[:space:]]*$/d;' > neu.json
 	#cat work.json | jq '.downloads[-1] | .rank' > last.txt
-	cat work.json | jq --argjson alt "$alt" '[.downloads[] | select( .id > $alt ) | select( .category.slug == "firmware") | {ID: .id, Name: .name, Versions: .version, Changelog: .changelog} ]' | sed 's!    !!g;s!  !!g;s!\]!!g;s!\[!!g;s!\"!!g;s!{!!g;s!}!!g;/^[[:space:]]*$/d;' > neu.json
-        #cat work.json | jq '.downloads[0] | .id' > last.txt
+	cat work.json | jq --argjson alt "$alt" '[.downloads[] | select( .id > $alt ) | select( .category.slug == "firmware" or .category.slug == "software") | {ID: .id, Name: .name, Version: .version, Changelog: .changelog} ]' | sed 's!    !!g;s!  !!g;s!\]!!g;s!\[!!g;s!\"!!g;s!{!!g;s!}!!g;/^[[:space:]]*$/d;' > neu.json
+    cat work.json | jq --argjson alt "$alt" '[.downloads[] | select( .id > $alt ) | select( .category.slug == "firmware" or .category.slug == "software") | {ID_UBNT: .id, Name: .name, Version: .version, Changelog: .changelog} ]' > neu2.json
+	    #cat work.json | jq '.downloads[0] | .id' > last.txt
 	echo $neu > last.txt
 
 	if cat neu.json | grep -q "\[\]"
@@ -67,9 +68,12 @@ else
 		echo $versenden
 		curl -X POST \
 	     -H 'Content-Type: application/json' \
-	     -d '{"chat_id": "'$empfanger'", "text": "Neue Ubiquiti Firmware:
+	     -d '{"chat_id": "'$empfanger'", "text": "Neue Ubiquiti Firmware/Software:
 '"Neue ID: $neu Details: \n$versenden"' "}' \
 	     https://api.telegram.org/bot$token/sendMessage
+		curl --location 'http://'$(sed -n 4p cred.txt)'/items/Ubiquiti?access_token='$(sed -n 3p cred.txt)'' \
+		--header 'Content-Type: application/json' \
+		--data @neu2.json
 		#curl "https://api.telegram.org/bot$token/sendMessage?chat_id=$empfanger&text=Neue Firmware von Ubiquiti:%0A$versenden"
 	fi
 fi
