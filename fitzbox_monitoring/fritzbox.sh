@@ -67,6 +67,8 @@ curl --data "sid=$sid&lang=de&page=log&no_sidrenew=&filter=0" http://$(sed -n 5p
 #timeLast=$(cat response/fritzlog_filter2.txt | jq -r ".data.log[-1][1]")
 # New Format
 dateLast=$(cat response/fritzlog_filter2.txt | jq -r ".data.log[-1].date")
+# Reverse arrange fields with cut doesnt work, new solution with awk (line 70)
+dateLastConverted=$(echo "20$(echo $dateLast | awk -F "." '{ print $3 "-" $2 "-" $1}')")
 timeLast=$(cat response/fritzlog_filter2.txt | jq -r ".data.log[-1].time")
 
 if [ -z "$dateLast" ]
@@ -81,11 +83,11 @@ then
 fi
 echo
 #ls -1 response/ 
-echo ""$dateLast"_"$timeLast"_fritzlog_filter2.txt"
+echo ""$dateLastConverted"_"$timeLast"_fritzlog_filter2.txt"
 
 echo "Wildcardtest"
 #ls -1 response/ | grep -c ""$dateLast"_"${timeLast:0:6}".._fritzlog_filter2.txt"
-echo ""$dateLast"_"${timeLast:0:6}".._fritzlog_filter2.txt"
+echo ""$dateLastConverted"_"${timeLast:0:6}".._fritzlog_filter2.txt"
 #echo 
 
 echo
@@ -93,12 +95,13 @@ echo
 #Sekundenwerte werden mitgenommen und haben jedoch auf die Abfrage keinen Einfluss
 #if ls -1 response/ | grep ""$dateLast"_"${timeLast:0:6}".._fritzlog_filter2.txt"
 #Jetzt sollte es passen: Sekundenwerte werden ignoriert
-if ls -1 response/ | grep ""$dateLast"_"${timeLast:0:5}"_fritzlog_filter2.txt"
+if ls -1 response/ | grep ""$dateLastConverted"_"${timeLast:0:5}"_fritzlog_filter2.txt"
 then
 	echo "Datum bekannt"
 else
 	echo "Neue Datei, Fritzbox Neustart"
-	dateLastConverted=$(echo "20$(echo $dateLast | cut -d "." -f 3,2,1 | tr "." "-")")
+	# Reverse arrange fields with cut doesnt work, new solution with awk (line 70)
+	#dateLastConverted=$(echo "20$(echo $dateLast | cut -d "." -f 3,2,1 | tr "." "-")")
 #	Die Telegram-Token und Empfaenger liegen jetzt in einer Datei. Zeile 1 Token, Zeile 2 Empfaenger
 	curl "https://api.telegram.org/bot$(sed -n 1p cred.txt)/sendMessage?chat_id=$(sed -n 2p cred.txt)&text=Fritzbox Ollern Neustart "$dateLastConverted" "${timeLast:0:5}""
 	curl --location 'http://'$(sed -n 7p cred.txt)'/items/Fritzbox_Tracker?access_token='$(sed -n 6p cred.txt)'' \
@@ -110,5 +113,5 @@ else
 	}'
 fi
 
-mv response/fritzlog_filter2.txt "response/"$dateLast"_"${timeLast:0:5}"_fritzlog_filter2.txt"
-mv response/fritzlog_filter0.txt "response/"$dateLast"_"${timeLast:0:5}"_fritzlog_filter0.txt"
+mv response/fritzlog_filter2.txt "response/"$dateLastConverted"_"${timeLast:0:5}"_fritzlog_filter2.txt"
+mv response/fritzlog_filter0.txt "response/"$dateLastConverted"_"${timeLast:0:5}"_fritzlog_filter0.txt"
