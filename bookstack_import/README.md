@@ -19,3 +19,8 @@ See and rename cred.txt.example
 
 ### Folder with .md-files  
 `./bookstack_upload_single.sh <path/to/file.md>`  
+
+## Alternative  
+There are also a python-library called bsimport  
+https://github.com/JulioLoayzaM/bsimport  
+Maybe working, maybe not (last commit 2 years ago)  
