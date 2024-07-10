@@ -41,8 +41,8 @@ then
 	bash -c "which docker"
 	#cd <Some-Folder> # You have to navigate to the
 	#bash -c "/usr/bin/docker compose up -d"
-	bash -c "/usr/bin/docker compose start $(/usr/bin/docker ps -qf status=created)"
-	bash -c "/usr/bin/docker compose start $(/usr/bin/docker ps -qf status=exited)"
+	bash -c "/usr/bin/docker start $(/usr/bin/docker ps -qf status=created)"
+	bash -c "/usr/bin/docker start $(/usr/bin/docker ps -qf status=exited)"
 	/usr/bin/docker ps -a 
 fi
 
