@@ -11,6 +11,7 @@ cd "$(dirname -- "$0")"
 #telegram=1 #You need a file with credentials (cred.txt) in the same folder, first line the bot-token, second line the receiver-id. See cred.txt.example
 #docker=1
 #podman=1
+#custom=1
 
 date +%Y%m%d_%H%M%S
 echo "Script started"
@@ -21,7 +22,7 @@ id -u
 if [ "$telegram" ]
 then
 	echo
-	curl "https://api.telegram.org/bot"$(sed -n 1p cred.txt)"/sendMessage?chat_id="$(sed -n 2p cred.txt) -d text="$(hostname) restarted"
+	curl "https://api.telegram.org/bot"$(sed -n 1p ./cred.txt)"/sendMessage?chat_id="$(sed -n 2p ./cred.txt) -d text="$(hostname) restarted"
 	echo
 fi
 
@@ -45,6 +46,12 @@ then
 	bash -c "/usr/bin/docker start $(/usr/bin/docker ps -qf status=exited)"
 	/usr/bin/docker ps -a 
 fi
+
+if [ "$custom" ]
+then
+    echo "Enter custom bash-script-code here"
+fi
+
 
 echo
 echo Systemstart abgeschlossen
