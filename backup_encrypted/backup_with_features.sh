@@ -57,7 +57,7 @@ ownergroup=$(id -g)
 
 if [ "$testssh" ]
 then
-	ssh -p $port -i $keyfile $user@$ipaddress
+	ssh -p $port -i $keyfile $scpuser@$ipaddress
 	exit
 fi
 
@@ -77,12 +77,24 @@ then
 	echo "Erzeuge DB-Dump"
 	podman exec -it mariadb bash -c 'mariadb-dump --defaults-extra-file="/backup/.my.conf" -u root -P 3306 --all-databases' > $dbdumpdir/database_backup_$(date +%F).sql
 	
+	#####################
+	# The defaults-extra-file
+	# [client]
+	# user=gitea # Not needed, because in the command "-u root"
+	# password=your_password
+	# host=localhost # Not needed
+	# port=3306 # Not needed, because in the command "-P 3306"
+	#####################
+	
+	
 	# Porstres version
 	#podman exec -it ente_postgres_1 bash -c 'pg_dump -U pguser ente_db' > backup/database_backup_$(date +%F).sql
 	
 	
 	# Passwort wuerde auch direkt gehen
 	#podman exec -it mariadb mariadb-dump -u root -p<the-password-without-space> -P 3306 --all-databases > /tmp/database_backup_$(date +%F).sql
+	
+	rm -rf $dbdumpdir/.my.conf
 fi
 
 #Cleanup old archives
@@ -119,7 +131,7 @@ then
 	scp -i $keyfile -P $port -O $localdir/$filename $scpuser@$ipaddress:$targetdir/$filename
 
 
-	if ssh -p $port -i $keyfile $user@$ipaddress ls $targetdir/ | grep -c $filename
+	if ssh -p $port -i $keyfile $scpuser@$ipaddress ls $targetdir/ | grep -c $filename
 	then
 		echo "Backup transmitted"
 	else
