@@ -75,7 +75,7 @@ then
 	# Das Skript beruht darauf, dass das DB-Dump-Config-File vormals verschluesselt abgelegt wurde.
 	cat ../.my.conf.enc | openssl enc -d -aes-256-cbc -salt -pbkdf2 -pass file:/path/to/keyfile > ./backup/.my.conf
 	echo "Erzeuge DB-Dump"
-	podman exec -it mariadb bash -c 'mariadb-dump --defaults-extra-file="/backup/.my.conf" -u root -P 3306 --all-databases' > $dbdumpdir/database_backup_$(date +%F).sql
+	podman exec mariadb bash -c 'mariadb-dump --defaults-extra-file="/backup/.my.conf" -u root -P 3306 --all-databases' > $dbdumpdir/database_backup_$(date +%F).sql
 	
 	#####################
 	# The defaults-extra-file
@@ -88,11 +88,11 @@ then
 	
 	
 	# Porstres version
-	#podman exec -it ente_postgres_1 bash -c 'pg_dump -U pguser ente_db' > backup/database_backup_$(date +%F).sql
+	#podman exec ente_postgres_1 bash -c 'pg_dump -U pguser ente_db' > backup/database_backup_$(date +%F).sql
 	
 	
 	# Passwort wuerde auch direkt gehen
-	#podman exec -it mariadb mariadb-dump -u root -p<the-password-without-space> -P 3306 --all-databases > /tmp/database_backup_$(date +%F).sql
+	#podman exec mariadb mariadb-dump -u root -p<the-password-without-space> -P 3306 --all-databases > /tmp/database_backup_$(date +%F).sql
 	
 	rm -rf $dbdumpdir/.my.conf
 fi
