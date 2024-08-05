@@ -27,6 +27,9 @@ pwd -P
 #Switch for testing SSH-Connection
 #testssh=1
 
+#Switch costum script section
+#custom=1
+
 #Cleanup old archives
 #cleanuparchives=1
 
@@ -110,9 +113,17 @@ then
 	fi
 fi
 
+
+if [ "$custom" ]
+then
+    echo "Enter custom bash-script-code here, before creating archive"
+fi
+
+
 #https://unix.stackexchange.com/questions/59243/tar-removing-leading-from-member-names
 #tar -czf $localdir/"$zeitstempel"_$(cat /etc/hostname).tar.gz --exclude='/home/<Username>/webservices/dashy/icons/dashboard-icons' --exclude='/home/<Username>/webservices/traefik/logs/access.log' --absolute-names /home/andig91 
 # Encrypt it
+echo "Erstelle verschluesseltes Archiv"
 sudo tar -czf - --exclude='/home/ubuntu/.*' --absolute-names /home/ubuntu | openssl enc -e -aes-256-cbc -salt -pbkdf2 -pass file:/backup.key -out $localdir/$filename
 sudo chown $owneruser:$ownergroup $localdir/$filename
 echo "Archiv erstellt"
@@ -122,6 +133,12 @@ if [ "$dbbackup" ]
 then
 	echo "Deleting old db-dumps"
 	rm -rf $dbdumpdir/database_backup_*.sql
+fi
+
+
+if [ "$custom" ]
+then
+    echo "Enter custom bash-script-code here, after creating archive"
 fi
 
 

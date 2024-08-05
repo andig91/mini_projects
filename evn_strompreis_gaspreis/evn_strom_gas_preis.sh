@@ -51,7 +51,11 @@ fi
 
 null="0"
 function download_extract() {
-	preisalt=$(cat Entwicklung_Preise.txt | grep "$1" | tail -n 1 | cut -d ";" -f 3)
+	
+	echo
+	echo
+	#Added a ";" to grep, because there was "GasFloat" and "GasFloatBio". Now longer Names with the same begin work also correctly
+	preisalt=$(cat Entwicklung_Preise.txt | grep "$1;" | tail -n 1 | cut -d ";" -f 3)
 
 	curl "$2" --compressed > "./EVN-Seite.html"
 	preis=$(xmllint --html -xpath "(//span[@class='tariff-option-card__price-value'])[1]/text()" ./EVN-Seite.html 2>/dev/null)
@@ -98,18 +102,21 @@ function download_extract() {
 }
 
 download_extract Gas_Float https://www.evn.at/home/gas/optimafloatgas
-download_extract Gas_Flex https://www.evn.at/home/gas/optimaflexgas
+download_extract Gas_FloatBio https://www.evn.at/home/gas/optimafloatbiogas
+download_extract Gas_Flex https://www.evn.at/home/gas/optimaflexgas # invisible but there
 download_extract Gas_Garant https://www.evn.at/home/gas/optimagarantgas12
 download_extract Strom_Garant https://www.evn.at/home/strom/optimagarantnatur12
-download_extract Strom_Float https://www.evn.at/home/strom/optimafloatnatur 
-download_extract Strom_Smart https://www.evn.at/home/strom/optimasmartnaturbindung tagnacht
+download_extract Strom_Aktiv https://www.evn.at/home/strom/optimaaktivnatur 
+##download_extract Strom_Flex https://www.evn.at/home/strom/optimaflexnatur #deleted
+##download_extract Strom_Smart https://www.evn.at/home/strom/optimasmartnaturbindung tagnacht #deleted
 
 if [ -z "$aenderungstext" ]
 then
 	echo "Keine Aenderungen, Keine Nachricht"
 else
 	echo "$aenderungstext"
-	curl "https://api.telegram.org/bot$token/sendMessage?chat_id=$empfanger&text=Strominfo:$aenderungstext"
+	#curl "https://api.telegram.org/bot$token/sendMessage?chat_id=$empfanger&text=Strominfo:$aenderungstext"
+	curl "https://api.telegram.org/bot$token/sendMessage?chat_id=$empfanger" -d text="Strominfo: $aenderungstext"
 fi
 
 #curl "https://www.evn.at/home/gas/optimafloatgas" --compressed > "tarifblatt_gas/$(date +%F)_Tarifblatt_Gas.json"
