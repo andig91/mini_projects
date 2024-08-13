@@ -27,6 +27,9 @@ pwd -P
 #Switch for testing SSH-Connection
 #testssh=1
 
+#Backup cron
+#cronbackup=1
+
 #Switch costum script section
 #custom=1
 
@@ -62,6 +65,15 @@ if [ "$testssh" ]
 then
 	ssh -p $port -i $keyfile $scpuser@$ipaddress
 	exit
+fi
+
+
+if [ "$cronbackup" ]
+then
+	mkdir -p $dbdumpdir
+	crontab -l > $dbdumpdir/crontab_$(whoami).config
+	sudo crontab -l > $dbdumpdir/crontab_root.config
+	#exit
 fi
 
 
@@ -127,6 +139,7 @@ echo "Erstelle verschluesseltes Archiv"
 sudo tar -czf - --exclude='/home/ubuntu/.*' --absolute-names /home/ubuntu | openssl enc -e -aes-256-cbc -salt -pbkdf2 -pass file:/backup.key -out $localdir/$filename
 sudo chown $owneruser:$ownergroup $localdir/$filename
 echo "Archiv erstellt"
+ls -lah $localdir/*.tar.gz*
 
 echo
 if [ "$dbbackup" ]
