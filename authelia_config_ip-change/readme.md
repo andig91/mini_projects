@@ -10,6 +10,10 @@ This script automatically updates IP addresses in your Authelia configuration ba
 - **Telegram bot** set up to send alerts.
 - **CSV file** with domain and anchor tags.
 
+## Side-Note
+
+There is also a file `config-watch.sh`, but `inotifywait` doesn't work correctly if file modified with sed. So this script worked only on manual editing the `configuration.yml`. Maybe someone need such a solution. I only use the file `ip-change.sh`.
+
 ## Setup
 
 ### CSV File Example
