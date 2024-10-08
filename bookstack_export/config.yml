@@ -1,0 +1,31 @@
+# https://socket.dev/pypi/package/bookstack-file-exporter
+
+# python -m pip install bookstack-file-exporter
+
+# if you prefer a specific version, example:
+# python -m pip install bookstack-file-exporter==X.X.X
+
+# using pip
+# python -m bookstack_file_exporter -c <path_to_config_file>
+
+# if you already have python bin directory in your path
+# bookstack-file-exporter -c <path_to_config_file>
+
+# config.yml
+host: "https://your.bookstack.domain"
+credentials:
+    token_id: "<TOKEN-ID>"
+    token_secret: "TOKEN-SECRET"
+formats: # md only example
+- markdown
+# - html
+# - pdf
+# - plaintext
+output_path: "bkps/"
+assets:
+    export_images: true
+    export_attachments: true
+    modify_markdown: true
+    export_meta: false
+    verify_ssl: true
+
