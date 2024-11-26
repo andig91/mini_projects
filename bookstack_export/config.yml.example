@@ -11,21 +11,36 @@
 # if you already have python bin directory in your path
 # bookstack-file-exporter -c <path_to_config_file>
 
+# With docker or podman  
+# docker run \
+#    --user 1000:1000 \
+#    --rm \
+#    -v ./config.yml:/export/config/config.yml:ro \
+#    -v ./md-tgz:/export/dump \
+#    docker.io/homeylab/bookstack-file-exporter:latest
+# Replace docker with podman if you use it with podman 
+# Write out to dump isn't working in podman without `chown 777` because of container-user `exporter`
+
 # config.yml
-host: "https://your.bookstack.domain"
+host: "https://bookstack.your.domain"
+#host: "http://localhost:6875"
 credentials:
     token_id: "<TOKEN-ID>"
-    token_secret: "TOKEN-SECRET"
+    token_secret: "<TOKEN-SECRET>"
 formats: # md only example
-- markdown
+  - markdown
 # - html
-# - pdf
+#  - pdf
 # - plaintext
-output_path: "bkps/"
+
+# Comment out output_path or set it to `/export/dump` inside docker environment
+#output_path: "bkps/"
+
 assets:
     export_images: true
     export_attachments: true
     modify_markdown: true
     export_meta: false
     verify_ssl: true
+keep_last: 2
 
