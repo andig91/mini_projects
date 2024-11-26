@@ -38,6 +38,13 @@ def scan_document(document_name="ScanDocument"):
         "sec-fetch-site": "same-origin",
         "sec-gpc": "1"
     }
+    
+	################################
+	# In this XML you can modify the print settings
+	# Brightness and Contrast => 1800 Brighter, 200 Darker/More Contrast, 1000 Medium 
+	# XResolution and YResolution = DPI => 300 Standard Text, 600 High, 200 Foto
+	# Scan Region = Input Format => All special formats are better over WebIF
+	################################
     body = """
     <scan:ScanSettings xmlns:scan="http://schemas.hp.com/imaging/escl/2011/05/03" xmlns:dd="http://www.hp.com/schemas/imaging/con/dictionaries/1.0/" xmlns:dd3="http://www.hp.com/schemas/imaging/con/dictionaries/2009/04/06" xmlns:fw="http://www.hp.com/schemas/imaging/con/firewall/2011/01/05" xmlns:scc="http://schemas.hp.com/imaging/escl/2011/05/03" xmlns:pwg="http://www.pwg.org/schemas/2010/12/sm">
         <pwg:Version>2.1</pwg:Version>
