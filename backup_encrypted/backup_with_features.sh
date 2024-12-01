@@ -1,5 +1,7 @@
 #!/bin/bash
 
+## Version 2024-12-01
+
 # Install in CRONTAB
 #12 23 * * * /path/to/backup_with_features.sh > /tmp/backup.log 2>&1 &
 
@@ -20,45 +22,30 @@ pwd -P
 #        exit 1
 #fi
 
-############################################################################################################################
-##### Activate Features
-#Uncomment if needed
-
-#Switch for testing SSH-Connection
-#testssh=1
-
-#Backup cron
-#cronbackup=1
-
-#Switch costum script section
-#custom=1
-
-#Cleanup old archives
-#cleanuparchives=1
-
-#Switch for DB-Backup-Feature
-#dbbackup=1
-
-#Switch for scp-transfer
-#If the node can directly communicate with the backup instance
-#scptransfer=1
-############################################################################################################################
-
-
 zeitstempel=$(date +%Y%m%d_%H%M%S)
 echo $zeitstempel
 
-port=2223
-scpuser=sshbackup
-ipaddress=10.0.22.25
-localdir=/tmp
-targetdir=/backup
-dbdumpdir=./backup
-filename="$zeitstempel"_$(cat /etc/hostname).tar.gz.enc
-keyfile=/home/andig91/.ssh/ed25519_$(cat /etc/hostname)_backup
-owneruser=$(id -u)
-ownergroup=$(id -g)
-#Directories or Files to Backup should be configured in the tar-command directly, because there can be more folders to backup and different count of excludes 
+# Getting params from env-file
+if [ -f "./backup.env" ]
+then
+	source backup.env
+	if [ ! "$filename" ]
+	then
+		echo "The variable \"filename\" is missing. Please check your env-file"
+		exit
+	fi
+else
+	echo "No environment file"
+	echo "See/Copy backup.env.example in https://github.com/andig91/mini_projects/tree/main/backup_encrypted"
+	echo "Following env-vars are possible:"
+	echo "testssh, cronbackup, custom, cleanuparchives, dbbackup, scptransfer"
+	echo "port, scpuser, ipaddress, localdir, targetdir, dbdumpdir, filename"
+	echo "keyfile, owneruser, ownergroup"
+	exit 1
+fi
+
+# Test env-file-import
+echo "That will be your archive filename: $filename"
 
 
 if [ "$testssh" ]
@@ -136,7 +123,9 @@ fi
 #tar -czf $localdir/"$zeitstempel"_$(cat /etc/hostname).tar.gz --exclude='/home/<Username>/webservices/dashy/icons/dashboard-icons' --exclude='/home/<Username>/webservices/traefik/logs/access.log' --absolute-names /home/andig91 
 # Encrypt it
 echo "Erstelle verschluesseltes Archiv"
-sudo tar -czf - --exclude='/home/ubuntu/.*' --absolute-names /home/ubuntu | openssl enc -e -aes-256-cbc -salt -pbkdf2 -pass file:/backup.key -out $localdir/$filename
+# --absolute-names => "Dir to Backup" 
+# --exclude => set (multiple) subdir which you want to exclude from backup (Log-Files, etc)
+sudo tar -czf - --exclude='/home/<Username>/.*' --exclude='/home/<Username>/logs/*' --absolute-names /home/<Username> | openssl enc -e -aes-256-cbc -salt -pbkdf2 -pass file:${encryptionkeypath} -out $localdir/$filename
 sudo chown $owneruser:$ownergroup $localdir/$filename
 echo "Archiv erstellt"
 ls -lah $localdir/*.tar.gz*
@@ -166,7 +155,7 @@ then
 		echo "Backup transmitted"
 	else
 		echo "Error Backup Transmission"
-		curl "https://api.telegram.org/bot$(sed -n 1p cred.txt)/sendMessage?chat_id=$(sed -n 2p cred.txt)" -d text="$(cat /etc/hostname): Backup not transmitted"
+		curl "https://api.telegram.org/bot${telegramtoken}/sendMessage?chat_id=${telegramreceiver}" -d text="$(cat /etc/hostname): Backup not transmitted"
 	fi
 
 
