@@ -1,0 +1,30 @@
+#version: "2.1"
+---
+
+services:
+  openssh-server:
+    image: lscr.io/linuxserver/openssh-server:latest
+    container_name: openssh-server
+    #hostname: openssh-server #optional
+    environment:
+      - PUID=1002
+      - PGID=100
+      - TZ=Etc/UTC
+      - PUBLIC_KEY_FILE=/pubkeys/pubkey.pub #optional
+      #- PUBLIC_KEY_FILE=/path/to/file #optional
+      #- PUBLIC_KEY_DIR=/path/to/directory/containing/_only_/pubkeys #optional
+      #- PUBLIC_KEY_URL=https://github.com/username.keys #optional
+      - SUDO_ACCESS=false #optional
+      - PASSWORD_ACCESS=false #optional
+      #- USER_PASSWORD=password #optional
+      #- USER_PASSWORD_FILE=/path/to/file #optional
+      - USER_NAME=<Destination-User> #optional
+      #- LOG_STDOUT= #optional
+    volumes:
+      #- /path/to/openssh-server/config:/config
+      - ./<YOUR-PUBLIC-KEY.pub>:/pubkeys/pubkey.pub:ro
+      #- ./ed25519_docker_backup.pub:/config/.ssh/authorized_keys
+      - <BACKUP-DIRECTORY>:/backup
+    ports:
+      - 2222:2222 # Change the Port on the left side
+    restart: unless-stopped
