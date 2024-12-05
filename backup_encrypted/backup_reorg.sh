@@ -8,6 +8,8 @@ echo "Dieses Skript dient zum ausmisten der Backup-Files"
 #Also possible ${0##*/} 
 echo "./$(basename $0) <Backup-Archive-with-Path>"
 
+createdir=0
+
 if [ -z "$1" ]
 then
 	echo "No argument given, no todo!"
@@ -38,34 +40,52 @@ for dir in */; do
 		if [ "$1" = "weekly" ] || [ "$1" = "weekly_cleanup" ]
 		then
 			weeklydir=$dirrawname/history/weekly
-			if [ ! -d $weeklydir ]
+			
+			## You can changed the logic from "create folder if not there" to "the folder must exist to activate backup"
+			## Change variable "createdir" on the top
+			if [ ! -d $weeklydir ] && [ $createdir = "1" ]
 			then
 				echo "Ordner wird angelegt: $weeklydir"
 				mkdir -p $weeklydir
 			fi
-			if [ -f $weeklydir/$lastfile ]
+			
+			if [ ! -d $weeklydir ]
 			then
-				echo "File already copied: $sourcedir/$lastfile"
+				echo "The weekly backup only executed if a directory \"$weeklydir\" exists!"
 			else
-				echo "copy $sourcedir/$lastfile to $weeklydir/$lastfile"
-				cp $sourcedir/$lastfile $weeklydir/$lastfile
+				if [ -f $weeklydir/$lastfile ]
+				then
+					echo "File already copied: $sourcedir/$lastfile"
+				else
+					echo "copy $sourcedir/$lastfile to $weeklydir/$lastfile"
+					cp $sourcedir/$lastfile $weeklydir/$lastfile
+				fi
 			fi
 		fi
 		
 		if [ "$1" = "monthly" ] || [ "$1" = "monthly_cleanup" ]
 		then
 			monthlydir=$dirrawname/history/monthly
-			if [ ! -d $monthlydir ]
+			
+			## You can changed the logic from "create folder if not there" to "the folder must exist to activate backup"
+			## Change variable "createdir" on the top
+			if [ ! -d $monthlydir ] && [ $createdir = "1" ]
 			then
 				echo "Ordner wird angelegt: $monthlydir"
 				mkdir -p $monthlydir
 			fi
-			if [ -f $monthlydir/$lastfile ]
+			
+			if [ ! -d $monthlydir ]
 			then
-				echo "File already copied: $sourcedir/$lastfile"
+				echo "The monthly backup only executed if a directory \"$monthlydir\" exists!"
 			else
-				echo "copy $sourcedir/$lastfile to $monthlydir/$lastfile"
-				cp $sourcedir/$lastfile $monthlydir/$lastfile
+				if [ -f $monthlydir/$lastfile ]
+				then
+					echo "File already copied: $sourcedir/$lastfile"
+				else
+					echo "copy $sourcedir/$lastfile to $monthlydir/$lastfile"
+					cp $sourcedir/$lastfile $monthlydir/$lastfile
+				fi
 			fi
 		fi
 		
