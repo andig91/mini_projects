@@ -1,0 +1,15 @@
+{
+  "name": "willhaben",
+  "version": "1.0.0",
+  "description": "willahben iphone crawler",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "willhaben": "^0.2.1"
+  }
+}
