@@ -1,4 +1,6 @@
+```
 sudo apt install nodejs npm
 npm install
-Get in the directory
+#Get in the directory
 node .
+```
