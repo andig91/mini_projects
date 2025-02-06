@@ -76,7 +76,7 @@ def scan_document(document_name="ScanDocument"):
     time.sleep(0.1)
 
     # URL zum Abrufen des Scanner-Status
-    status_url = "https://drucker.gruber.live/eSCL/ScannerStatus"
+    status_url = f"{domain}/eSCL/ScannerStatus"
     status_response = requests.get(status_url)
 
     if status_response.status_code == 200:
