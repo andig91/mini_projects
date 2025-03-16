@@ -1,0 +1,21 @@
+#version: '3'
+#https://docs.linuxserver.io/images/docker-nginx/#usage
+#https://github.com/BaksiLi/docker-webdav/blob/main/Dockerfile
+
+services:
+  nginx-webdav:
+    image: lscr.io/linuxserver/nginx:latest
+    container_name: webdav-nginx
+    environment:
+      - PUID=1002
+      - PGID=100
+      - TZ=Europe/Vienna
+    restart: unless-stopped
+    ports:
+      - "8980:80/tcp"
+    volumes:
+      - "/<YOUR>/<DATA>/<DIR>:/media/data"
+      - "/<YOUR>/<CONFIG>/<DIR>/default.conf:/config/nginx/site-confs/default.conf:ro"
+      - "/<YOUR>/<CONFIG>/<DIR>/htpasswd:/etc/nginx/htpasswd:ro"
+
+
