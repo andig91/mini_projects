@@ -4,4 +4,4 @@ Vibe-Coded to search in title and description over API
 https://developers.plane.so/api-reference/introduction  
 Implemented in Python and NodeRED.  
 
-![](./plane_issue_search_NodeRED-screenshot.png "NodeRED Screenhot")
+![](./plane_issue_search_NodeRED-screenshot.png "NodeRED Screenshot")
