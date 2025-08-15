@@ -1,0 +1,5 @@
+{
+ "base_url": "https://plane.<your>.<domain>",
+ "api_key": "<api-key>",
+ "workspace": "<workspace-name>"
+}

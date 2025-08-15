@@ -1,0 +1,942 @@
+[
+    {
+        "id": "tab_0513101e",
+        "type": "tab",
+        "label": "Plane Issue Search",
+        "disabled": false,
+        "info": "Reads config.json, fetches projects+issues from Plane, searches for query and returns bundled contexts."
+    },
+    {
+        "id": "inject_3eebcc47",
+        "type": "inject",
+        "z": "tab_0513101e",
+        "name": "Start search (edit payload)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"query\": \"Excali\", \"match\": \"all\", \"case_sensitive\": false}",
+        "payloadType": "json",
+        "x": 150,
+        "y": 100,
+        "wires": [
+            [
+                "324320a05ac26313"
+            ]
+        ]
+    },
+    {
+        "id": "change_8cc85608",
+        "type": "change",
+        "z": "tab_0513101e",
+        "name": "Prepare message (set config path & fields)",
+        "rules": [
+            {
+                "t": "set",
+                "p": "configFilename",
+                "pt": "msg",
+                "to": "/plane/config.json",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "window",
+                "pt": "msg",
+                "to": "5",
+                "tot": "num"
+            },
+            {
+                "t": "set",
+                "p": "max_snippets",
+                "pt": "msg",
+                "to": "3",
+                "tot": "num"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 580,
+        "y": 120,
+        "wires": [
+            [
+                "filein_1c950638"
+            ]
+        ]
+    },
+    {
+        "id": "filein_1c950638",
+        "type": "file in",
+        "z": "tab_0513101e",
+        "name": "Read config.json",
+        "filename": "configFilename",
+        "filenameType": "msg",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 700,
+        "y": 80,
+        "wires": [
+            [
+                "json_7bcdfe2d"
+            ]
+        ]
+    },
+    {
+        "id": "json_7bcdfe2d",
+        "type": "json",
+        "z": "tab_0513101e",
+        "name": "Parse config",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 930,
+        "y": 80,
+        "wires": [
+            [
+                "func_build_proj_f109ceca"
+            ]
+        ]
+    },
+    {
+        "id": "func_build_proj_f109ceca",
+        "type": "function",
+        "z": "tab_0513101e",
+        "name": "Build projects request",
+        "func": "\n// msg.payload: config object (from config.json)\nconst cfg = msg.payload || {};\nmsg.config = cfg;\nmsg.headers = { 'x-api-key': cfg.api_key, 'Accept': 'application/json' };\nconst workspace = cfg.workspace;\nconst base = (cfg.base_url || '').replace(/\\/$/, '');\nif(!base || !cfg.api_key){\n    node.error('base_url or api_key missing in config', msg);\n    return null;\n}\nmsg.url = base + '/api/v1/workspaces/' + workspace + '/projects/';\nmsg.method = 'GET';\nmsg.workspace = workspace;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1160,
+        "y": 80,
+        "wires": [
+            [
+                "http_proj_3ff27642",
+                "31ba8fca6007f4ec"
+            ]
+        ]
+    },
+    {
+        "id": "http_proj_3ff27642",
+        "type": "http request",
+        "z": "tab_0513101e",
+        "name": "Get projects (pages)",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1420,
+        "y": 80,
+        "wires": [
+            [
+                "func_handle_proj_ff320147"
+            ]
+        ]
+    },
+    {
+        "id": "func_handle_proj_ff320147",
+        "type": "function",
+        "z": "tab_0513101e",
+        "name": "Handle projects page",
+        "func": "\nconst page = msg.payload || {};\nconst accumKey = 'projects_accum';\nlet accum = context.get(accumKey) || [];\nif(Array.isArray(page.results)){\n    accum = accum.concat(page.results);\n    context.set(accumKey, accum);\n}\nif(page.next){\n    const nextMsg = {\n        url: page.next,\n        method: 'GET',\n        headers: msg.headers,\n        config: msg.config,\n        query: msg.query,\n        match: msg.match,\n        window: msg.window,\n        max_snippets: msg.max_snippets,\n        case_sensitive: msg.case_sensitive\n    };\n    return [null, nextMsg];\n}\ncontext.set(accumKey, null);\nconst out = {\n    payload: accum,\n    config: msg.config,\n    headers: msg.headers,\n    query: msg.query,\n    match: msg.match,\n    window: msg.window,\n    max_snippets: msg.max_snippets,\n    case_sensitive: msg.case_sensitive,\n    workspace: msg.workspace\n};\nreturn [out, null];\n",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 1680,
+        "y": 80,
+        "wires": [
+            [
+                "split_proj_0f253ed6",
+                "dba38ea0add82a72"
+            ],
+            [
+                "http_proj_3ff27642"
+            ]
+        ]
+    },
+    {
+        "id": "split_proj_0f253ed6",
+        "type": "split",
+        "z": "tab_0513101e",
+        "name": "Split projects",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": "1",
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 650,
+        "y": 240,
+        "wires": [
+            [
+                "func_build_issues_7cfd0e0f",
+                "d144adb2f0a23f97"
+            ]
+        ]
+    },
+    {
+        "id": "func_build_issues_7cfd0e0f",
+        "type": "function",
+        "z": "tab_0513101e",
+        "name": "Build issues request (per project)",
+        "func": "\nconst project = msg.payload || {};\nconst cfg = msg.config || {};\nconst base = (cfg.base_url || '').replace(/\\/$/, '');\nconst workspace = cfg.workspace || msg.workspace;\nmsg.projectId = (project.id !== undefined) ? String(project.id) : String(project['id']);\nmsg.projectIdentifier = project.identifier;\nmsg.workspace = workspace;\nmsg.url = base + '/api/v1/workspaces/' + workspace + '/projects/' + msg.projectId + '/issues';\nmsg.method = 'GET';\nmsg.headers = { 'x-api-key': cfg.api_key, 'Accept': 'application/json' };\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 340,
+        "wires": [
+            [
+                "http_issues_8ae3ed6f"
+            ]
+        ]
+    },
+    {
+        "id": "http_issues_8ae3ed6f",
+        "type": "http request",
+        "z": "tab_0513101e",
+        "name": "Get issues (pages)",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 930,
+        "y": 340,
+        "wires": [
+            [
+                "func_handle_issues_bccb941f"
+            ]
+        ]
+    },
+    {
+        "id": "func_handle_issues_bccb941f",
+        "type": "function",
+        "z": "tab_0513101e",
+        "name": "Handle issues page",
+        "func": "\nconst page = msg.payload || {};\nconst projectId = msg.projectId;\nconst accumKey = 'issues_accum_' + projectId;\nlet accum = context.get(accumKey) || [];\nif(Array.isArray(page.results)){\n    accum = accum.concat(page.results);\n    context.set(accumKey, accum);\n}\nif(page.next){\n    const nextMsg = {\n        url: page.next,\n        method: 'GET',\n        headers: msg.headers,\n        config: msg.config,\n        projectId: projectId,\n        projectIdentifier: msg.projectIdentifier,\n        query: msg.query,\n        match: msg.match,\n        window: msg.window,\n        max_snippets: msg.max_snippets,\n        case_sensitive: msg.case_sensitive,\n        workspace: msg.workspace\n    };\n    return [null, nextMsg];\n}\ncontext.set(accumKey, null);\nconst out = {\n    payload: accum,\n    projectId: projectId,\n    projectIdentifier: msg.projectIdentifier,\n    config: msg.config,\n    headers: msg.headers,\n    query: msg.query,\n    match: msg.match,\n    window: msg.window,\n    max_snippets: msg.max_snippets,\n    case_sensitive: msg.case_sensitive,\n    workspace: msg.workspace\n};\nreturn [out, null];\n",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 1190,
+        "y": 340,
+        "wires": [
+            [
+                "func_process_issues_d76db3ad"
+            ],
+            [
+                "http_issues_8ae3ed6f"
+            ]
+        ]
+    },
+    {
+        "id": "func_process_issues_d76db3ad",
+        "type": "function",
+        "z": "tab_0513101e",
+        "name": "Process issues (search + snippets)",
+        "func": "\n// Helper utilities\nfunction decodeEntities(str) {\n    if(!str) return '';\n    return str.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '\"').replace(/&#39;/g, \"'\").replace(/&#x2F;/g,'/');\n}\nfunction stripHtml(s) {\n    if(!s) return '';\n    s = s.replace(/<(?:script|style)[^>]*>[\\s\\S]*?<\\/(?:script|style)>/gi, ' ');\n    s = s.replace(/<[^>]+>/g, ' ');\n    s = decodeEntities(s);\n    return s.replace(/\\s+/g, ' ').trim();\n}\nfunction getWordSpans(text) {\n    const re = /\\S+/g;\n    const words = [];\n    const spans = [];\n    let m;\n    while((m = re.exec(text)) !== null){\n        words.push(m[0]);\n        spans.push([m.index, re.lastIndex]);\n    }\n    return {words, spans};\n}\nfunction findWordIndex(spans, pos) {\n    let lo = 0, hi = spans.length - 1;\n    while(lo <= hi){\n        const mid = Math.floor((lo+hi)/2);\n        const [s,e] = spans[mid];\n        if(s <= pos && pos < e) return mid;\n        if(pos < s) hi = mid - 1; else lo = mid + 1;\n    }\n    return null;\n}\nfunction escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\\\\]\\\\]/g, '\\\\$&'); }\n\nfunction contextsAroundMatches(text, query, window, caseSensitive){\n    if(!text || !query) return [];\n    const flags = caseSensitive ? 'g' : 'gi';\n    const pattern = new RegExp(escapeRegExp(query), flags);\n    const {words, spans} = getWordSpans(text);\n    const contexts = [];\n    let m;\n    while((m = pattern.exec(text)) !== null){\n        const startChar = m.index;\n        const endChar = m.index + m[0].length - 1;\n        const sIdx = findWordIndex(spans, startChar);\n        const eIdx = findWordIndex(spans, endChar);\n        if(sIdx === null || eIdx === null) continue;\n        const a = Math.max(0, sIdx - window);\n        const b = Math.min(words.length, eIdx + window + 1);\n        contexts.push(words.slice(a,b).join(' '));\n    }\n    const seen = new Set(); const out = [];\n    for(const c of contexts){ if(!seen.has(c)){ seen.add(c); out.push(c); } }\n    return out;\n}\n\nfunction tokenize(q){ if(!q) return []; const t = q.match(/\\w+/gu) || []; return t.filter(Boolean); }\nfunction containsAllWords(text, tokens, caseSensitive){\n    if(!tokens || tokens.length===0) return false;\n    if(!caseSensitive){ const tf = text.toLowerCase(); return tokens.every(t=> tf.indexOf(t.toLowerCase()) !== -1); }\n    return tokens.every(t => text.indexOf(t) !== -1);\n}\nfunction contextsForTokens(text, tokens, window, caseSensitive){\n    const ctxs = [];\n    for(const t of tokens){\n        ctxs.push(...contextsAroundMatches(text, t, window, caseSensitive));\n    }\n    const seen = new Set(); const out = [];\n    for(const c of ctxs){ if(!seen.has(c)){ seen.add(c); out.push(c); } }\n    return out;\n}\n\n// Main processing\nconst issues = msg.payload || [];\nconst cfg = msg.config || {};\nconst base = (cfg.base_url || '').replace(/\\/$/, '');\nconst workspace = msg.workspace || cfg.workspace || 'organizer';\nconst query = msg.query || '';\nconst match = msg.match || 'all';\nconst window = (msg.window !== undefined) ? msg.window : 5;\nconst max_snippets = (msg.max_snippets !== undefined) ? msg.max_snippets : 3;\nconst case_sensitive = !!msg.case_sensitive;\nconst tokens = tokenize(query);\n\nconst hits = [];\n\nfor(const issue of issues){\n    const issueId = (issue.id !== undefined) ? String(issue.id) : String(issue['id'] || '');\n    const sequence_id = issue.sequence_id;\n    const name = (issue.name || '').toString();\n    const desc = stripHtml(issue.description_html || '');\n    const fieldContexts = {};\n    function handleField(fieldName, text){\n        if(!text) return;\n        if(match === 'phrase'){\n            const ctxs = contextsAroundMatches(text, query, window, case_sensitive);\n            if(ctxs && ctxs.length) fieldContexts[fieldName] = ctxs.slice(0, max_snippets);\n        } else if(match === 'all'){\n            if(containsAllWords(text, tokens, case_sensitive)){\n                const ctxs = contextsForTokens(text, tokens, window, case_sensitive);\n                if(ctxs && ctxs.length) fieldContexts[fieldName] = ctxs.slice(0, max_snippets);\n            }\n        } else { // any\n            const ctxs = contextsForTokens(text, tokens, window, case_sensitive);\n            if(ctxs && ctxs.length) fieldContexts[fieldName] = ctxs.slice(0, max_snippets);\n        }\n    }\n    handleField('name', name);\n    handleField('description_html', desc);\n    if(Object.keys(fieldContexts).length > 0){\n        const url = base + '/' + workspace + '/browse/' + msg.projectIdentifier + '-' + sequence_id + '/';\n        hits.push({\n            project_identifier: msg.projectIdentifier,\n            issue_id: issueId,\n            sequence_id: sequence_id,\n            title: name,\n            url: url,\n            contexts: fieldContexts\n        });\n    }\n}\n\nmsg.payload = hits;\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 1450,
+        "y": 520,
+        "wires": [
+            [
+                "debug_6a41e6e2",
+                "e0e786b3cb40c204"
+            ]
+        ]
+    },
+    {
+        "id": "debug_6a41e6e2",
+        "type": "debug",
+        "z": "tab_0513101e",
+        "name": "Results (debug)",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 1720,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "31ba8fca6007f4ec",
+        "type": "debug",
+        "z": "tab_0513101e",
+        "name": "debug 431",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 890,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "dba38ea0add82a72",
+        "type": "debug",
+        "z": "tab_0513101e",
+        "name": "debug 432",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1610,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "e3a02f2fd385c84e",
+        "type": "ui_dropdown",
+        "z": "tab_0513101e",
+        "name": "",
+        "label": "Search Mode",
+        "tooltip": "",
+        "place": "Select option",
+        "group": "101ec90ec6f824bb",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "multiple": false,
+        "options": [
+            {
+                "label": "all",
+                "value": "all",
+                "type": "str"
+            },
+            {
+                "label": "any",
+                "value": "any",
+                "type": "str"
+            },
+            {
+                "label": "phrase",
+                "value": "phrase",
+                "type": "str"
+            }
+        ],
+        "payload": "",
+        "topic": "match",
+        "topicType": "flow",
+        "className": "",
+        "x": 340,
+        "y": 620,
+        "wires": [
+            [
+                "36d4ee7a88cb0bb4"
+            ]
+        ]
+    },
+    {
+        "id": "324320a05ac26313",
+        "type": "change",
+        "z": "tab_0513101e",
+        "name": "Prepare message (set variables)",
+        "rules": [
+            {
+                "t": "set",
+                "p": "query",
+                "pt": "msg",
+                "to": "payload.query",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "match",
+                "pt": "msg",
+                "to": "payload.match",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "case_sensitive",
+                "pt": "msg",
+                "to": "payload.case_sensitive",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 410,
+        "y": 80,
+        "wires": [
+            [
+                "change_8cc85608"
+            ]
+        ]
+    },
+    {
+        "id": "869f0a0657494a49",
+        "type": "ui_button",
+        "z": "tab_0513101e",
+        "name": "",
+        "group": "101ec90ec6f824bb",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Start Suche",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 150,
+        "y": 220,
+        "wires": [
+            [
+                "a3131b6a9f40eccf"
+            ]
+        ]
+    },
+    {
+        "id": "3e8828f4e491215d",
+        "type": "ui_text_input",
+        "z": "tab_0513101e",
+        "name": "",
+        "label": "Suchstring",
+        "tooltip": "",
+        "group": "101ec90ec6f824bb",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "text",
+        "delay": 300,
+        "topic": "topic",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "msg",
+        "x": 330,
+        "y": 440,
+        "wires": [
+            [
+                "cdb3d786cab80faf"
+            ]
+        ]
+    },
+    {
+        "id": "d67acadaca52bbf0",
+        "type": "ui_switch",
+        "z": "tab_0513101e",
+        "name": "",
+        "label": "case-sensitive",
+        "tooltip": "",
+        "group": "101ec90ec6f824bb",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 340,
+        "y": 520,
+        "wires": [
+            [
+                "25d994b99d5912b2"
+            ]
+        ]
+    },
+    {
+        "id": "7236f82e21ceced3",
+        "type": "inject",
+        "z": "tab_0513101e",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "all",
+        "payloadType": "str",
+        "x": 150,
+        "y": 620,
+        "wires": [
+            [
+                "e3a02f2fd385c84e"
+            ]
+        ]
+    },
+    {
+        "id": "2df11fd09b529f73",
+        "type": "inject",
+        "z": "tab_0513101e",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "false",
+        "payloadType": "bool",
+        "x": 150,
+        "y": 520,
+        "wires": [
+            [
+                "d67acadaca52bbf0"
+            ]
+        ]
+    },
+    {
+        "id": "69accd2d3fd1d148",
+        "type": "inject",
+        "z": "tab_0513101e",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "str",
+        "x": 150,
+        "y": 440,
+        "wires": [
+            [
+                "3e8828f4e491215d"
+            ]
+        ]
+    },
+    {
+        "id": "cdb3d786cab80faf",
+        "type": "change",
+        "z": "tab_0513101e",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "suchstring",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 560,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "25d994b99d5912b2",
+        "type": "change",
+        "z": "tab_0513101e",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "case_sense",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 560,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "36d4ee7a88cb0bb4",
+        "type": "change",
+        "z": "tab_0513101e",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "matchmode",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 560,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a3131b6a9f40eccf",
+        "type": "change",
+        "z": "tab_0513101e",
+        "name": "Prepare message (set variables)",
+        "rules": [
+            {
+                "t": "set",
+                "p": "query",
+                "pt": "msg",
+                "to": "suchstring",
+                "tot": "flow"
+            },
+            {
+                "t": "set",
+                "p": "match",
+                "pt": "msg",
+                "to": "matchmode",
+                "tot": "flow"
+            },
+            {
+                "t": "set",
+                "p": "case_sensitive",
+                "pt": "msg",
+                "to": "case_sense",
+                "tot": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 390,
+        "y": 200,
+        "wires": [
+            [
+                "change_8cc85608"
+            ]
+        ]
+    },
+    {
+        "id": "e0e786b3cb40c204",
+        "type": "join",
+        "z": "tab_0513101e",
+        "name": "",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": false,
+        "accumulate": false,
+        "timeout": "1",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "num",
+        "reduceFixup": "",
+        "x": 1510,
+        "y": 620,
+        "wires": [
+            [
+                "cb50609d098f96ec",
+                "2271a78356641381",
+                "aa5e991c3250990c"
+            ]
+        ]
+    },
+    {
+        "id": "77529f8007443c4c",
+        "type": "debug",
+        "z": "tab_0513101e",
+        "name": "Results combined flat (debug)",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1970,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "d144adb2f0a23f97",
+        "type": "debug",
+        "z": "tab_0513101e",
+        "name": "debug 433",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 850,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "cb50609d098f96ec",
+        "type": "function",
+        "z": "tab_0513101e",
+        "d": true,
+        "name": "flat array manual",
+        "func": "var newMsg = [];\nfor (var i = 0; i < msg.payload.length; i++) {\n  for (var j = 0; j < msg.payload[i].length; j++) {\n    newMsg.push(msg.payload[i][j]);\n  }\n}\n//node.send(newMsg);\nmsg.payload = newMsg\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1730,
+        "y": 680,
+        "wires": [
+            [
+                "77529f8007443c4c"
+            ]
+        ]
+    },
+    {
+        "id": "2271a78356641381",
+        "type": "debug",
+        "z": "tab_0513101e",
+        "name": "Results combined (debug)",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1780,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "aa5e991c3250990c",
+        "type": "function",
+        "z": "tab_0513101e",
+        "name": "flat array easy",
+        "func": "msg.payload = msg.payload.flat();\nif (msg.payload.length === 0) {\n  var timestampnow = new Date().toLocaleString(\"de-AT\", { timeZone: \"Europe/Vienna\" });\n  var dummy = [];\n  var dummyitem = {\"title\":\"Nothing Found \" + timestampnow,\"url\":\"\",\"contexts\":{}};\n  dummy.push(dummyitem);\n  msg.payload = dummy;\n}\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1660,
+        "y": 760,
+        "wires": [
+            [
+                "2a4c96cc6da636f0",
+                "c446a72d0188e625",
+                "db68b8c5722b5b04"
+            ]
+        ]
+    },
+    {
+        "id": "2a4c96cc6da636f0",
+        "type": "debug",
+        "z": "tab_0513101e",
+        "name": "Results combined flat (debug)",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1970,
+        "y": 820,
+        "wires": []
+    },
+    {
+        "id": "c446a72d0188e625",
+        "type": "ui_template",
+        "z": "tab_0513101e",
+        "group": "735cb1bb93c0aa5c",
+        "name": "Dynamic File List",
+        "order": 1,
+        "width": "0",
+        "height": "17",
+        "format": "<h3>Issues</h3>\n<ul>\n  <li ng-repeat=\"issue in msg.payload\">\n    <strong>{{ issue.title }}</strong><br>\n    <a href=\"{{ issue.url }}\" target=\"_blank\">{{ issue.url }}</a>\n\n    <!-- Kontext: Name -->\n    <div ng-if=\"issue.contexts.name && issue.contexts.name.length\">\n      Name:\n      <ul>\n        <li ng-repeat=\"ctx in issue.contexts.name\">\n          {{ ctx }}\n        </li>\n      </ul>\n    </div>\n\n    <!-- Kontext: Beschreibung -->\n    <div ng-if=\"issue.contexts.description_html && issue.contexts.description_html.length\">\n      Beschreibung:\n      <ul>\n        <li ng-repeat=\"ctx in issue.contexts.description_html\">\n          {{ ctx }}\n        </li>\n      </ul>\n    </div>\n  </li>\n</ul>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 1950,
+        "y": 880,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "db68b8c5722b5b04",
+        "type": "switch",
+        "z": "tab_0513101e",
+        "name": "",
+        "property": "payload[0].title",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "Nothing Found",
+                "vt": "str"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 1670,
+        "y": 1000,
+        "wires": [
+            [],
+            [
+                "6c8b4f73382ebe27"
+            ]
+        ]
+    },
+    {
+        "id": "6c8b4f73382ebe27",
+        "type": "trigger",
+        "z": "tab_0513101e",
+        "name": "",
+        "op1": "1",
+        "op2": "[]",
+        "op1type": "str",
+        "op2type": "json",
+        "duration": "30",
+        "extend": true,
+        "overrideDelay": false,
+        "units": "min",
+        "reset": "",
+        "bytopic": "all",
+        "topic": "topic",
+        "outputs": 2,
+        "x": 1860,
+        "y": 1000,
+        "wires": [
+            [],
+            [
+                "aa5e991c3250990c"
+            ]
+        ]
+    },
+    {
+        "id": "101ec90ec6f824bb",
+        "type": "ui_group",
+        "name": "Plane-Search",
+        "tab": "087fdfb4a383b67c",
+        "order": 1,
+        "disp": false,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "735cb1bb93c0aa5c",
+        "type": "ui_group",
+        "name": "Results",
+        "tab": "087fdfb4a383b67c",
+        "order": 2,
+        "disp": false,
+        "width": "13",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "087fdfb4a383b67c",
+        "type": "ui_tab",
+        "name": "Plane-Search",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
