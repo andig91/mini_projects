@@ -1,6 +1,7 @@
 ### Full-Text-Search for Project-Management-Software Plane
 https://plane.so/  
 Vibe-Coded to search in title and description over API  
+Maybe in the future it will be expanded to comment-search  
 https://developers.plane.so/api-reference/introduction  
 Implemented in Python and NodeRED.  
 
